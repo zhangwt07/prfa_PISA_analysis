@@ -1,0 +1,9 @@
+Package: ReportPISA
+Type: Package
+Title: A comparative study of the effect of parental involvement on mathematics literacy between different regions of China
+Version: 0.1.0
+Author: Weitong Zhang
+Maintainer: Weitong Zhang <weitongz@andrew.cmu.edu>
+Description: More about what it does (maybe more than one line)
+License: What license is it under?
+LazyData: TRUE

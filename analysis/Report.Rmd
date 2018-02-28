@@ -1,0 +1,425 @@
+---
+title: "A comparative study of the effect of parental involvement on mathematics literacy between different regions of China"
+author: "Weitong Zhang"
+date: "12/6/2017"
+biblography:
+ - references.bib
+ - r-references.bib
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+if (!require(knitr)){
+  install.packages("knitr",repos = "http://cran.us.r-project.org")
+}
+if (!require(kableExtra)){
+  install.packages("kableExtra",repos = "http://cran.us.r-project.org")
+}
+if (!require(ggplot2)){
+  install.packages("ggplot2",repos = "http://cran.us.r-project.org")
+}
+if (!require(data.table)){
+  install.packages("data.table",repos = "http://cran.us.r-project.org")
+}
+if (!require(magrittr)){
+  install.packages("magrittr",repos = "http://cran.us.r-project.org")
+}
+if (!require(dplyr)){
+  install.packages("dplyr",repos = "http://cran.us.r-project.org")
+}
+if (!require(devtools)) {
+    install.packages("devtools",repos = "http://cran.us.r-project.org")
+    require(devtools)
+}
+if (!require(cowplot)){
+  install.packages("cowplot",repos = "http://cran.us.r-project.org")
+}
+if (!require(h2o)){
+  install.packages("h2o",repos = "http://cran.us.r-project.org")
+}
+if (!require(citation)){
+  install.packages("citation",repos = "http://cran.us.r-project.org")
+}
+
+
+install_github("pbiecek/PISA2012lite")
+# load it
+library("PISA2012lite")
+# loading library
+library(knitr)
+library(kableExtra)
+library(data.table)
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(cowplot)
+library(h2o)
+
+# clean the data 
+data("student2012")
+student2012<-setDT(student2012)
+data("parent2012")
+parent2012<-setDT(parent2012)
+areas <-c("China-Shanghai","Hong Kong-China","Macao-China")
+student_china <- student2012[CNT %in% areas]
+parent_china <- parent2012[CNT %in% areas]
+
+```
+
+
+## Abstract 
+
+This is a comparative study of the parental involvement on mathematics literacy and factors that would influence the parental involvement between different regions of China. The study is based on the data and reference from PISA 2012.
+The three areas that took part in PISA 2012 in China were Shanghai, Hong Kong and Macao. China did very well in MATH in PISA 2012, with Shanghai being top1 worldwide. The scores are compared and the impact of parental involvement and influencing factors are discussed in this study.
+
+## 1 Introduction
+   
+As we all know, parental influence are very important to children's academic behavior. Research shows that parents’ beliefs about math development and their role in fostering it were significantly related to children’s math activities. There was important variability and relatively limited participation of children in math activities at home. There were related differences in children’s engagement in math activities.**[links](https://www.hindawi.com/journals/cdr/2012/851657/)**    
+
+Students’ and parents’ engagement in schools and learning partly depends on the general appreciation of education and related values. When schools encourage and provide for parental involvement, parents can become more effective in supporting both school programmes and the educational progress of their children. Furthermore, parents who participate in school activities are more likely to volunteer their efforts in assisting the school, therefore increasing available resources. Parents who know what schools expect by being familiar with the school programme and teacher expectations are better able to assist their own children in learning. Finally, the act of attracting parents to participate actively in educational and school endeavours can serve to form social networks where parents get to know and help each other. Arguably, such social networks raise overall performance through the accumulation of “social capital” (Coleman, 1988).Also, by 15 years of age, it is not only the accumulated effects of schooling that contribute to an individual’s academic performance, but also the experiences encountered at home. More educated parents are able to provide a richer set of learning opportunities.   
+As parental involvement is an important part of teaching and schooling in educating student, results and further instructions can be addressed by policies and regulations on schools' arranging parental involvement activities and on parents' guide in educating their children.
+
+    
+There are three areas took part in PISA 2012 test.    
+
+Economy|ISO Code|
+----|--------|
+Hong Kong-China|HKG|
+Macao-China|MAC|
+Shanghai-China|QCN|
+
+This report will analyse the data from PISA 2012 based on mainly on these three areas in China.
+
+
+## 2 Methods
+
+R package of `data.table`,
+@Manual{data.table,
+title = {data.table: Extension of `data.frame`},
+author = {Matt Dowle and Arun Srinivasan},
+year = {2017},
+note = {R package version 1.10.4-3},
+url = {https://CRAN.R-project.org/package=data.table},
+}
+`ggplot2`,
+@Book{ggplot,
+author = {Hadley Wickham},
+title = {ggplot2: Elegant Graphics for Data Analysis},
+publisher = {Springer-Verlag New York},
+year = {2009},
+isbn = {978-0-387-98140-6},
+url = {http://ggplot2.org},
+}
+`magrittr`,
+
+`dplyr`,`cowplot` are used in this study.    
+The data was provided by PISA2012. The overall scores were calculated based on the weighted data. Normal distribution and standardize were used in this report. Linear regression and other analytical tech were used in this report.
+
+
+## 3 Results
+
+####fig1. the overall Math literacy in the three areas in China:
+
+```{r ave score china,warning=FALSE}
+source('~/Desktop/Codes/94842/ReportPISA/R/ave_score_china.R')
+
+t<-ave_score_china(student_china)
+m<-melt(t,id.vars="areas")
+ggplot(m, aes(variable, value)) +
+  geom_bar(aes(fill = areas), position = "dodge", stat="identity")
+```
+This is for overall Math literacy and sub parts scores in Shanghai, Hong Kong and Macao.    
+    
+####fig2. distribution of MATH scores in the three areas from China
+```{r t test}
+standardise <- function(x) {
+  (x - mean(x)) / sd(x)
+}
+
+  
+d1<-student_china[CNT=="China-Shanghai",MATH:=round(PV1MATH)]
+cowplot::plot_grid(
+  ggplot(d1, aes(MATH)) + 
+    geom_histogram(na.rm = T),
+  d1 %>% 
+    ggplot() + stat_qq(aes(sample = MATH %>% standardise)) + geom_abline()+
+    labs(title="China-Shanghai")
+)
+
+
+d2<-student_china[CNT=="Hong Kong-China",MATH:=round(PV1MATH)]
+cowplot::plot_grid(
+  ggplot(d2, aes(MATH)) + 
+    geom_histogram(na.rm = T),
+  d2 %>% 
+    ggplot() + stat_qq(aes(sample = MATH %>% standardise)) + geom_abline()+
+    labs(title="Hong Kong-China")
+  
+)
+
+d3<-student_china[CNT=="Macao-China",MATH:=round(PV1MATH)]
+cowplot::plot_grid(
+  ggplot(d3, aes(MATH)) + 
+    geom_histogram(na.rm = T),
+  d3 %>% 
+    ggplot() + stat_qq(aes(sample = MATH %>% standardise)) + geom_abline()+
+    labs(title="Macao-China")
+)
+
+```
+
+####fig3. relationship between **Highest parental occupational status** and student scores in **MATH**:
+```{r parent occupation,warning=FALSE}
+source('~/Desktop/Codes/94842/ReportPISA/R/parent_occupational.R')
+parent_occupational(student_china)
+
+
+```
+
+#### fig4. relationship between student attitude and behavior and parental involvement
+
+```{r learn1 hk ,warning=FALSE,error=FALSE,echo=FALSE}
+student_subset <- student_china[CNT=="Hong Kong-China", .(CNT,STRATUM, STIDSTD, MATHEFF, ANXMAT, ESCS,OPENPS)]
+parent_subset <- parent_china[CNT=="Hong Kong-China", .(STRATUM, STIDSTD, PARINVOL)]
+
+setkey(student_subset, STRATUM, STIDSTD)
+setkey(parent_subset, STRATUM, STIDSTD)
+
+student_subset[parent_subset, PARINVOL := PARINVOL]
+
+
+h2o.init(nthreads = -1, max_mem_size = "2G")
+h2o.removeAll() ## clean slate - just in case the cluster was already running
+
+
+h2o_data <- na.omit(student_subset) %>%
+  as.h2o %>%
+  h2o.splitFrame(ratios = c(0.8),  #partition data into 80% and 20% chunks
+                 destination_frames = c("train", "test"),
+                 seed = 1234) %>% #setting a seed will guarantee reproducibility
+  `names<-`(c("train", "test"))
+
+y <- "PARINVOL"
+x <- setdiff(names(h2o_data$train), c(y, "STRATUM", "STIDSTD"))  # x is all the cols except price and id
+print(x)
+
+
+hyperparams <- list(ntrees = c(1000),
+                    max_depth = c(2, 5, 10),
+                    learn_rate = c(0.01, 0.005, 0.001))
+
+gbm_grid <- h2o.grid("gbm",
+                     y = y,
+                     x = x,
+                     training_frame = h2o_data$train,
+                     grid_id = "gbm_models",
+                     nfolds = 5,
+                     hyper_params = hyperparams,
+                     min_split_improvement = 1e-04,
+                     stopping_rounds = 10,
+                     col_sample_rate = 0.5,
+                     seed = 1234)
+
+sorted_grid <- h2o.getGrid(grid_id = "gbm_models", sort_by = "mae")
+
+best_model <- h2o.getModel(sorted_grid@model_ids[[1]])
+
+#summary(best_model)
+
+vi <- h2o.varimp(best_model)
+
+pp <- h2o.partialPlot(best_model, h2o_data$train, cols = c("MATHEFF", "ANXMAT", "ESCS","OPENPS"))
+
+h2o.shutdown(prompt = F)
+
+pp <- lapply(pp, function(x) setDT(x) %>% .[, variable := names(x)[1]]) %>%
+  rbindlist %>%
+  setnames("MATHEFF", "value")
+
+ggplot(pp, aes(value, mean_response)) +
+  geom_ribbon(aes(ymin = mean_response - (stddev_response / 2),
+                  ymax = mean_response + (stddev_response / 2)),
+              fill = "lightgrey") +
+  geom_line(colour = "blue", size = 1) +
+  facet_wrap(~ variable, scale = "free_x") +
+  theme_bw()
+
+```
+
+#### fig5. Parental involvement in school:
+
+```{r parental involvement,warning=FALSE}
+source('~/Desktop/Codes/94842/ReportPISA/R/involvement_relation.R')
+involvement_relation(parent_china)
+```
+
+#### fig6. relationship of other influencing factors and parental involvment
+
+```{r wealth}
+student_subset<- student_china[CNT %in% areas,.(CNT,STRATUM, STIDSTD,WEALTH,PV1MATH,HISCED,HISEI)]
+parent_subset<-parent_china[CNT %in% areas,.(STRATUM, STIDSTD, PARINVOL)]
+
+setkey(student_subset, STRATUM, STIDSTD)
+setkey(parent_subset, STRATUM, STIDSTD)
+
+p<-student_subset[parent_subset,PARINVOL:=PARINVOL]
+
+factors<-c("WEALTH","HISCED","HISEI")
+
+
+p1<-p[CNT=="Hong Kong-China",.(PARINVOL,WEALTH)]
+p2<-p[CNT=="Macao-China",.(PARINVOL,WEALTH)]
+p1<-p1%>%
+  group_by(WEALTH) %>%
+  summarise_all(funs(mean(., na.rm=TRUE)) )
+p1$CNT <- rep("Hong Kong-China",nrow(p1))
+p2<-p2%>%
+  group_by(WEALTH) %>%
+  summarise_all(funs(mean(., na.rm=TRUE)) )
+p2$CNT <- rep("Macao-China",nrow(p2))
+p3<-rbind(p1,p2)
+ggplot(p3,aes(x=WEALTH,y=PARINVOL,group=CNT,color=CNT))+
+  geom_point(na.rm=TRUE)+
+  geom_smooth(method = 'loess')
+
+p1<-p[CNT=="Hong Kong-China",.(PARINVOL,HISCED)]
+p2<-p[CNT=="Macao-China",.(PARINVOL,HISCED)]
+p1<-p1%>%
+  group_by(HISCED) %>%
+  summarise_all(funs(mean(., na.rm=TRUE)) )
+p1$CNT <- rep("Hong Kong-China",nrow(p1))
+p2<-p2%>%
+  group_by(HISCED) %>%
+  summarise_all(funs(mean(., na.rm=TRUE)) )
+p2$CNT <- rep("Macao-China",nrow(p2))
+p3<-rbind(p1,p2)
+ggplot(p3,aes(x=HISCED,y=PARINVOL,group=CNT,color=CNT))+
+  geom_point(na.rm=TRUE)+
+  geom_smooth(method = 'loess')
+
+p1<-p[CNT=="Hong Kong-China",.(PARINVOL,HISEI)]
+p2<-p[CNT=="Macao-China",.(PARINVOL,HISEI)]
+p1<-p1%>%
+  group_by(HISEI) %>%
+  summarise_all(funs(mean(., na.rm=TRUE)) )
+p1$CNT <- rep("Hong Kong-China",nrow(p1))
+p2<-p2%>%
+  group_by(HISEI) %>%
+  summarise_all(funs(mean(., na.rm=TRUE)) )
+p2$CNT <- rep("Macao-China",nrow(p2))
+p3<-rbind(p1,p2)
+ggplot(p3,aes(x=HISEI,y=PARINVOL,group=CNT,color=CNT))+
+  geom_point(na.rm=TRUE)+
+  geom_smooth(method = 'loess')
+
+```
+
+
+
+## 4 Discussion
+
+
+### 4.1 Overall review of MATH literacy of PISA 2012 in different areas in China
+As we can see from fig1, the detailed scores for each section. The section initials are showed below in MATH and the *sub* explanation with scores from Shanghai:
+```{r sub math}
+source('~/Desktop/Codes/94842/ReportPISA/R/ave_score1.R')
+sub <- c("MATH","MACC","MACQ","MACS","MACU","MAPE","MAPF","MAPI","READ","SCIE")
+t<- c()
+for (item in sub){
+  #add a table
+  t<-cbind(t,ave_score("China-Shanghai",item,student_china))
+}
+df<-data_frame("MATH"=list("math",t[1]),
+               "MACC"=list("Change and Relationships",t[2]),
+               "MACQ"=list("Quantity",t[3]),
+               "MACS"=list("Space and Shape",t[4]),
+               "MACU"=list("Uncertainty and Data",t[5]),
+               "MAPE"=list("Employ",t[6]),
+               "MAPF"=list("Formulate",t[7]),
+               "MAPI"=list("Interpret",t[8]),
+               "READ"=list("reading",t[9]),
+               "SCIE"=list("science",t[10]))
+
+knitr::kable(df)
+  
+```
+
+As from fig5.1, Shanghai has the highest score in all the sub parts and the overall MATH score. Students in Shanghai show a very good understanding especially in *Space and Shape* part, and relatively low in *Interpret* part. Also for students in Macao, they have the highest score in *Space and Shape* and lower in *Uncertainty and Data*. While students in Hong Kong show a overall average skills in all the sub parts, with higher score in *Formulate* and relatively lower in *Uncertainty and Data*.    
+For general, the scores in China are of high competitiveness in the world. Shanghai is the highest overall MATH score in PISA 2012 test, and Hong Kong, Macao in the higher percentile.
+    
+### Distribution of MATH scores of PISA 2012 in different areas in China
+The histogram plots are very direct in the visialization of score data distribution. The scores are rounded before generating the plot. As the PISA test takes students from testing areas (countries, cities, economies) randomly at each layer, the result of MATH scores should be normal distribution based on the fact that the sample number is large enough. The sampling process is described as, to provide valid estimates of student achievement, the sample of students had to be selected using established and professionally recognised principles of scientific sampling, in a way that ensured representation of the full target population of 15-year-old students in the participating countries.
+Also, quality standards had to be maintained with respect to:     (i) the coverage of the PISA international target population;     (ii) accuracy and precision;    (iii) the school and student response rates.    
+
+From the result, MATH scores in Shanghai are a little right-tailed, which means the students who have a middle-top level in MATH are more in Shanghai. And there are some outliers, which means some students in Shanghai have a very high score in PISA test. Hong Kong students and Macao students get the score being quite normal distribution, while the Macao students are more concentrated to center.
+
+
+### 4.3 Relationship between Highest parental occupational status and student scores in MATH
+
+**HISEI** stands for the highest parental occupational status. The plots show the relationship of students' MATH score compared to the parental occupational status. The academic performance of children are always linked with perental education concepts and social status, of which the occupational status is of good importance. Children whose parents are enjoying a hight social or occupational status, in this case with a higher score in **HISEI**, tend to have a higher score in MATH in PISA.    
+We may usually think that if the parents are more occupied by work than family or time with their children in study, the children are then naturally required to be of more relying on themselves in both taking care of oneself and studying on their own. It is still of debate whether it is better for the parents to be with the children when they are studying or doing the homework, for that the parents may have some instructions in good study styles and it may also make the children more dependant and may lack the ability of self study. From the figures above we could tell that in the 15-year-old students in China, those whose parents have a hight occupational status tent to have a better performance in PISA MATH test. Also, from the trend line we could see, this trend is more influencing in Shanghai than Hong Kong and Macao, as the lines of Hong Kong and Macao are more flat.
+
+### 4.4 Relationship of parental involvement and students' performance in MATH
+
+This is a very interesting plot. **PARINVOL** stands for *Parental involvement in their child's school*, which may include activities *Discuss behaviour own initiative,Discuss behaviour teacher, Volunteer maintenance, Volunteer clubs, Volunteer library, Assist teacher, Guest speaker, School government, Discuss progress own initiative, Discuss progress teacher, Volunteer in school canteen*.    
+As the **PARINVOL** scores are only available in Hong Kong and Macao in China, the plot is using these two areas. From the plot and lossy trend line, there is no obvious relationship between parental involvement and students' math performance. In Hong Kong, the relationship is as the parental involvement increases, students' scores are dropping, with a little improvement around **PARINVOL**=2. Especially for highest **PARINVOL** parts, the students' performance in PISA are dropping quickly. As for Macao, the line is dropping at first and reaches the lowest around 1, and start to increase. In Macao, students MATH performance are improved as the parents are involving more in school activities listed above while Hong Kong is not.    
+I believe this is a complicated social question and the relationship in different areas should be viewed with the cultural background and more factors. Even thought Hong Kong and Macao are similiar in many ways, they have different attitudes and approaches towards things, and this may lead to different result of above relationship.
+
+### 4.5 Factors influence parental involvement - Family wealth
+In this sector, I want to look into the factors that may influence the parental involvement index. Roughly, parental involvement is based on the parents' social status, occupational status, involvement in children's education and social abilities.    
+In Hong Kong and Macao, the relationship of family wealth, which are based on students and parents report, and parental involvement is again different. In Hong Kong, families with more money are not involving more in parental and school activities. There is a drop around -2 to 1 in wealth index. However, in Macao, the wealthier families and middle families are more likely to be more involved in school activities. There is also a drop in Macao around wealth = -1 to 1. In this plot, we could tell that the middle and most wealthy families in Macao are more likely to have a higher parental involvement index, while in Hong Kong, the below-middle and middle are more likely to do so.    
+This may be caused by different cultural background and current life style. As Hong Kong and Macao were ruled by different countries and the life pace and stress are dramastically different, the families in Hong Kong may not pay much attention in school activities as those in Macao.
+
+### 4.6 Factors influence parental involvement - Highest educational level of parents
+
+In this plot, we could see that families with a higher highest educational level of parents tend to have a higher index in parental involvement, in both Hong Kong and Macao. The **HISCED** is labelled with different factor levels of educational level. However because there is only 9 levels after data mergeing, there may be high error in this factor. 
+
+### 4.7 Factors influence parental involvement - Highest parental occupational status
+
+Ths educational level of parents may also be a influencing factor to parental involvement. **HISEI** stands for *highest educational level of parents*. From this plot, we could see that Hong Kong and Macao are almost of the same level.
+Macao families whose highest educational level of parent index are around 50 have a higher parental involvement than those in Hong Kong. While for the families those who have the highest scores in **HISEI**, Hong Kong families tend to be more likely to get involvement.
+
+
+
+## 5 Conclusion
+
+
+The MATH scores from PISA 2012 in China are of high competitiveness in the world. Shanghai is the highest overall MATH score in PISA 2012 test, and Hong Kong, Macao in the higher percentile. The distribution of MATH scores in China are nearly normal distribution.    
+Children whose parents are enjoying a hight social or occupational status, tend to have a higher score in MATH in PISA. However, the relationship of parental involvement and students' performance in MATH differs in Hong Kong and Macao.    
+Factors that may impact the parental involvement in a certain area include family wealth, highest educational level of parents, highest parental occupational status. Factor of family wealth is more subject to region background, while highest educational level of parents index and highest parental occupational status index show a similiar trend in relationship with parental involvement.    
+
+Further research is needed to dig deeper into this topic. The data of PISA 2012 was missing for Shanghai, China, and related comparison could be completed. A further investigation in parental involvement data from Mainland China would be very important. Also, other factors that may impact parental involvement and parent-teacher relations would be interesting topics.
+
+## 6 References
+
+@article{Parents' Beliefs about Children's Math Development and Children's Participation in Math Activities,
+author = {Susan Sonnenschein},
+title = {Parents' Beliefs about Children's Math Development and Children's Participation in Math Activities},
+journal = {Child Development Research},
+volume = {2012 (2012)},
+number = {851657},
+year = {2012},
+doi = {10.1155/2012/851657},
+URL = { 
+http://dx.doi.org/10.1155/2012/851657
+},
+eprint = { 
+http://dx.doi.org/10.1155/2012/851657
+}
+}
+
+@article{THE EFFECT OF PARENTAL INVOLVEMENT ON MATH ACHIEVEMENT
+OF CHILDREN WITH ASIAN MOTHERS,
+author = {Xiaoyue Jiang},
+title = {THE EFFECT OF PARENTAL INVOLVEMENT ON MATH ACHIEVEMENT
+OF CHILDREN WITH ASIAN MOTHERS},
+year = {2014},
+URL = { 
+https://repository.library.georgetown.edu/bitstream/handle/10822/709896/Jiang_georgetown_0076M_12591.pdf;sequence=1
+},
+eprint = { 
+https://repository.library.georgetown.edu/bitstream/handle/10822/709896/Jiang_georgetown_0076M_12591.pdf;sequence=1
+}
+}
+
